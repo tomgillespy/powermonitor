@@ -1,0 +1,2 @@
+Chars on Text Size 2 = 10 (almost 11).
+Chars on Text Size 3 = 5 1/3

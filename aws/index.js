@@ -18,8 +18,8 @@ exports.handler = async function(event) {
             if (freqMatches) {
                 responseObject.frequency = freqMatches[1];
             }
-            const typesr = new RegExp(/<center><b>(.*) (\d+\.\d+)GW<br>\((\d+\.\d+)%\)<\/b><\/center>/img);
-            
+            const typesr = new RegExp(/<center><b>(.*) (-?\d+\.\d+)GW<br>\((-?\d+\.\d+)%\)<\/b><\/center>/img);
+
             let typeMatches;
 
             while((typeMatches = typesr.exec(response.data)) !== null) {
