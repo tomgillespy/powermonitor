@@ -4,7 +4,7 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <bitmaps.h>
-#include <Stepper.h>
+#include <AccelStepper.h>
 
 #include <ArduinoJson.h>
 
@@ -42,9 +42,8 @@ Neotimer screenTimer = Neotimer();
 uint8 typeShowing = 0;
 uint8 apiTypes = 0;
 
-const int stepsPerRevolution = 200;
-Stepper gauge(stepsPerRevolution, 15, 13, 12, 14);
-
+const int stepsPerRevolution = 2000;
+AccelStepper gauge(AccelStepper::FULL4WIRE, 14, 12, 13, 15);
 
 
 void displaySpashScreen() {
@@ -183,8 +182,10 @@ void setup()   {
   fetchTimer.set(1000);
   screenTimer.set(10000);
 
-  gauge.step(stepsPerRevolution);
-  gauge.step(stepsPerRevolution * 2);
+  gauge.setMaxSpeed(2000);
+  gauge.setAcceleration(200);
+  gauge.setCurrentPosition(0);
+  gauge.moveTo(stepsPerRevolution);
 }
 
 void fetchData() {
@@ -233,10 +234,11 @@ void fetchData() {
 }
 
 void loop() {
+  gauge.run();
   if (WiFiMulti.run() != WL_CONNECTED) {
       renderWifiStatus();
   } else {
-    renderScreen(typeShowing);
+    //renderScreen(typeShowing);
     if (fetchTimer.repeat()) {
       fetchData();
       fetchTimer.set(60000);
