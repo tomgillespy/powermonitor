@@ -4,12 +4,11 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <bitmaps.h>
+#include <Stepper.h>
 
 #include <ArduinoJson.h>
 
 #include <neotimer.h>
-
-#include <Servo.h>
 
 // Used for software SPI
 #define OLED_CLK 5
@@ -43,7 +42,9 @@ Neotimer screenTimer = Neotimer();
 uint8 typeShowing = 0;
 uint8 apiTypes = 0;
 
-Servo gaugeServo;
+const int stepsPerRevolution = 200;
+Stepper gauge(stepsPerRevolution, 15, 13, 12, 14);
+
 
 
 void displaySpashScreen() {
@@ -54,6 +55,22 @@ void displaySpashScreen() {
 
 void renderIcon(uint index) {
   display.drawBitmap(32, 20, logo_allArray[index], 64, 64, SSD1327_WHITE);
+}
+
+void renderWifiStatus() {
+
+  display.drawBitmap(32, 20, logo_wifi, 64, 64, SSD1327_WHITE);
+  display.setTextSize(2);
+  display.setTextWrap(false);
+  display.setTextColor(SSD1327_WHITE);
+
+  display.setCursor(0, 0);
+  display.print("Connecting...");
+  display.setCursor(0, 90);
+  display.setTextSize(3);
+  //display.printf("%.2f", idx == 1 ? demand : frequency);
+
+  display.display();
 }
 
 int getIconIdx() {
@@ -148,14 +165,12 @@ void setup()   {
      while (1) yield();
   }
 
-  gaugeServo.attach(15);
-  gaugeServo.write(0);
-
   displaySpashScreen();
   delayYield(1000);
 
   WiFi.mode(WIFI_STA);
   WiFiMulti.addAP("DISCOVERY", "QEETDRPA");
+  WiFiMulti.addAP("MiSMK", "3M3n1nSh3ds12");
 
   for(int i = 0; i < 13; i++) {
     Serial.println("displaying icon...");
@@ -167,6 +182,9 @@ void setup()   {
 
   fetchTimer.set(1000);
   screenTimer.set(10000);
+
+  gauge.step(stepsPerRevolution);
+  gauge.step(stepsPerRevolution * 2);
 }
 
 void fetchData() {
@@ -215,22 +233,24 @@ void fetchData() {
 }
 
 void loop() {
-  renderScreen(typeShowing);
-  if (fetchTimer.repeat()) {
-    fetchData();
-    fetchTimer.set(60000);
-    if (typeShowing < 2) {
-      typeShowing = 2;
-    }
-  }
-  if (screenTimer.repeat()) {
-    if ((typeShowing + 1) >= (apiTypes + 2)) {
-      typeShowing = 0;
-    } else {
-      typeShowing++;
-    }
+  if (WiFiMulti.run() != WL_CONNECTED) {
+      renderWifiStatus();
+  } else {
     renderScreen(typeShowing);
-    gaugeServo.write(gaugeServo.read() + 10);
+    if (fetchTimer.repeat()) {
+      fetchData();
+      fetchTimer.set(60000);
+      if (typeShowing < 2) {
+        typeShowing = 2;
+      }
+    }
+    if (screenTimer.repeat()) {
+      if ((typeShowing + 1) >= (apiTypes + 2)) {
+        typeShowing = 0;
+      } else {
+        typeShowing++;
+      }
+      renderScreen(typeShowing);
+    }
   }
-
 }
