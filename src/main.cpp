@@ -182,8 +182,8 @@ void setup()   {
   fetchTimer.set(1000);
   screenTimer.set(10000);
 
-  gauge.setMaxSpeed(2000);
-  gauge.setAcceleration(200);
+  gauge.setMaxSpeed(200);
+  gauge.setAcceleration(50);
   gauge.setCurrentPosition(0);
   gauge.moveTo(stepsPerRevolution);
 }
